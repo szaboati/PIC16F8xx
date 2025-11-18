@@ -1,0 +1,45 @@
+LIST    P=16F877A
+    INCLUDE <P16F877A.INC>
+
+    CBLOCK  0x20
+        SUM         ; összeg
+        INDEX       ; index
+        MAX         ; maximum
+    ENDC
+
+    ORG     0x00
+    GOTO    START
+
+; --- LOOK-UP TABLE ---
+TABLE:
+    ADDWF   PCL,F       ; W + PCL -> ugrás a megfelelő RETLW értékre
+    RETLW   0x10        ; elem 1
+    RETLW   0x25        ; elem 2
+    RETLW   0x30        ; elem 3
+    RETLW   0x15        ; elem 4
+    RETLW   0x50        ; elem 5
+
+START:
+    CLRF    SUM         ; SUM = 0
+    CLRF    INDEX       ; index = 0
+    CLRF    MAX         ; MAX = 0
+
+LOOP:
+    MOVF    INDEX,W     ; W = index
+    CALL    TABLE       ; W = aktuális elem
+    ADDWF   SUM,F       ; SUM += W
+
+    ; MAX keresés
+    SUBWF   MAX,W       ; W = MAX - elem
+    BTFSS   STATUS,C    ; ha elem > MAX
+    MOVF    WREG,W      ; (nem kell, mert W már elem)
+    MOVWF   MAX         ; MAX = elem
+
+    INCF    INDEX,F     ; index++
+    MOVLW   0x05        ; 5 elem
+    SUBWF   INDEX,W     ; W = 5 - index
+    BTFSS   STATUS,Z    ; ha W != 0, folytatjuk
+    GOTO    LOOP
+
+    ; itt SUM és MAX tartalmazza az eredményt
+END
